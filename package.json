@@ -10,7 +10,7 @@
     "typescript": "^5"
   },
   "bin": {
-    "codagent": "index.ts"
+    "codagent": "src/index.ts"
   },
   "dependencies": {
     "commander": "^15.0.0"

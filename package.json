@@ -13,6 +13,10 @@
     "codagent": "src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.44",
+    "@ai-sdk/google": "^4.0.56",
+    "@ai-sdk/openai": "^4.0.50",
+    "ai": "^7.0.83",
     "axios": "1.15.1",
     "commander": "^15.0.0"
   }

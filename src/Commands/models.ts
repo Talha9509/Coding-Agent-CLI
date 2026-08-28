@@ -9,7 +9,7 @@ const configPath = path.join(os.homedir(), '.codagent', '.codagent.json');
 export const modelsCommand = new Command('models')
   .description('Returns all the supported models')
   .option('-m, --model <modelName>', 'name of the model', 'all')
-  .option('-s, --set <modelName>', 'set', '')
+  .option('-s, --set <modelName>', 'set')
   .action(async (options) => {
     console.log("Listing Models.....")
     let parsedFileData;
@@ -21,7 +21,7 @@ export const modelsCommand = new Command('models')
         if (parsedFileData.activeProvider == 'claude') {
           const response = await axios.get('https://api.anthropic.com/v1/models', {
             headers: {
-              'x-api-key': process.env.ANTHROPIC_API_KEY,
+              'x-api-key': parsedFileData.apiKeys['claude'],
               'anthropic-version': '2023-06-01',
               'content-type': 'application/json'
             }
@@ -35,7 +35,7 @@ export const modelsCommand = new Command('models')
         else if (parsedFileData.activeProvider == 'gemini') {
           const response = await axios.get('https://generativelanguage.googleapis.com/v1beta/models?pageSize=10', {
             headers: {
-              'x-goog-api-key': process.env.GEMINI_API_KEY,
+              'x-goog-api-key': parsedFileData.apiKeys['gemini'],
               'content-type': 'application/json'
             }
           })
@@ -44,13 +44,13 @@ export const modelsCommand = new Command('models')
             model.displayName.startsWith("Gemini")
           );
           textModels.map((model: any) => {
-            console.log(model.displayName)
+            console.log(`${model.displayName}   ----   ${model.name}`)
           })
         }
         else if (parsedFileData.activeProvider == 'chatgpt') {
           const response = await axios.get('https://api.openai.com/v1/models', {
             headers: {
-              'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+              'Authorization': `Bearer ${parsedFileData.apiKeys['chatgpt']}`,
               'content-type': 'application/json'
             }
           })
@@ -79,9 +79,8 @@ export const modelsCommand = new Command('models')
 
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
       }
+      console.log(`Successfully fetched all models of ${parsedFileData.activeProvider}`);
     } catch (error) {
       console.log(`Error Fetching all models of ${parsedFileData.activeProvider}!`);
     }
-
-    console.log(`Successfully fetched all models of ${parsedFileData.activeProvider}`);
   })

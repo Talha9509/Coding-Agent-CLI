@@ -1,8 +1,8 @@
 import { Command } from 'commander'
-import { generateText, type LanguageModel, stepCountIs } from 'ai'
-import { editFile, readFile, writeFile } from './tools'
-import { sendReq } from './utils/sendReq'
 import { getCredentials } from './utils/getCredentials'
+import { SystemPrompt } from './config'
+import { readFile } from './tools'
+import openAIclient from './utils/openAIclient'
 
 export const agentCommand = new Command('agent')
   .description('Runs the agent')
@@ -12,29 +12,48 @@ export const agentCommand = new Command('agent')
     try {
       const credentials = await getCredentials()
       console.log(credentials.provider, credentials.model, credentials.apiKey)
-      
-      const aiModel = sendReq(credentials.provider, credentials.model, credentials.apiKey)
+
+      const client = await openAIclient(credentials.apiKey) 
+      const messages: { role: string, content: string }[] = []
+      const tools: Record<string, any> = {
+        'readFile': readFile
+      }
+
+      messages.push({ role: 'system', content: SystemPrompt })
+      messages.push({ role: 'user', content: options.prompt })
+
       console.log(`Thinking using ${credentials.provider} (${credentials.model})...`);
-      const result = await generateText({
-        model: aiModel as LanguageModel,
-        prompt: options.prompt,
-        stopWhen: stepCountIs(10),
-        maxRetries: 3,
-        system: `You are an autonomous coding assistant. 
-          You have access to tools to interact with the file system. 
-          Do not ask the user for permission to use tools. 
-          Do not ask the user which parameters to use. 
-          Use given tools whenever required to edit, read, write a file to get the result user wants`,
-        tools: { readFile, editFile, writeFile }
-      })
 
-      // use agent loop here
+      let loop = true
+      let iteration = 0
+      while (loop) {
+        iteration++
+        console.log('iteration loop: ' + iteration)
+        const response = await client.chat.completions.create({
+          model: 'openrouter/free',
+          // @ts-ignore
+          messages: messages,
+          response_format: { type: 'json_object' }
+        })
+        const aiResponse = response.choices[0]?.message.content
 
-      console.log('\n--- Final Answer ---');
-      console.log(result);
-      console.log(result.toolCalls);
-      console.log(result.text);
-      console.log(`Successfully gave result`);
+        messages.push({ role: 'assistant', content: aiResponse as string })
+
+        console.log(`\n[Agent Thought]: ${aiResponse}`);
+
+        const call = JSON.parse(aiResponse as string)
+        if (call.type == 'output') {
+          console.log(`AI: ${call.output}`)
+          console.log("2nd loop ended")
+          loop = false
+        } else if (call.type == 'action') {
+          console.log("running action")
+          const fn = tools[call.function]
+          const observation = fn(call.input)
+          const obs = { "type": "observation", "observation": observation }
+          messages.push({ role: 'developer', content: JSON.stringify(obs) })
+        }
+      }
     } catch (error) {
       console.log(`Error`);
       console.log(error)

@@ -11,6 +11,7 @@ export const readFile = tool({
     filename: z.string().optional().describe('Alternative parameter: The name or path of the file to read'),
     path: z.string().optional().describe('Alternative parameter: The path to the file to read'),
   }),
+  // @ts-ignore
   execute: async ({ filePath, filename, path: fileP }: any): Promise<string> => {
     try {
       const resolvedPath = filePath || filename || fileP;
@@ -38,6 +39,7 @@ export const writeFile = tool({
     path: z.string().optional().describe('Alternative parameter: The path to the file to save'),
     content: z.string().describe('The code or text to write'),
   }),
+  // @ts-ignore
   execute: async ({ filePath, filename, path: fileP, content }: any): Promise<string> => {
     try {
       const resolvedPath = filePath || filename || fileP;
@@ -72,6 +74,7 @@ export const editFile = tool({
     replaceData: z.string().describe('The EXACT existing code or text to be replaced.'),
     newData: z.string().describe('The new code or text to write in its place.'),
   }),
+  // @ts-ignore
   execute: async ({ filePath, filename, fileP, replaceData, newData }: any): Promise<string> => {
     try {
       const resolvedPath = filePath || filename || fileP;

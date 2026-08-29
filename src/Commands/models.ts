@@ -67,6 +67,23 @@ export const modelsCommand = new Command('models')
             console.log(model.id)
           })
         }
+        else if (parsedFileData.activeProvider == 'openrouter') {
+          const response = await axios.get('https://openrouter.ai/api/v1/models?limit=100', {
+            headers: {
+              'Authorization': `Bearer ${parsedFileData.apiKeys['openrouter']}`,
+              'content-type': 'application/json'
+            }
+          })
+          const allModels = response.data.data;
+          const codingModels = allModels.filter((model: any) =>
+            model.id.endsWith('free') ||
+            model.name.startsWith('(free)')
+          );
+
+          codingModels.map((model: any) => {
+            console.log(model.id)
+          })
+        }
       } else {
         const config = {
           activeProvider: parsedFileData.activeProvider,

@@ -161,3 +161,39 @@ export function runCommandTool({ "command": command }: { "command": string }): s
   }
 }
 
+const listDirectoryToolDef: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'list_directory',
+    description: 'List the files and folders inside a directory.',
+    parameters: {
+      type: 'object',
+      properties: {
+        dirPath: { type: 'string', description: 'Directory to list. Defaults to the working directory.' },
+      },
+      required: [],
+    }
+  }
+};
+
+export function listDirectoryTool({ "dirPath": dirPath }: { "dirPath": string }): string {
+  const fullPath = safePath(dirPath ?? '.')
+  const names = fs.readdirSync(fullPath).sort()
+  if(names.length == 0) return "Empty Directory"
+
+  console.log(names.map((name) => {
+    const isDir = fs.statSync(path.join(fullPath, name)).isDirectory()
+    return isDir ? `${name}/` : name
+  }).join('\n'))
+  return names.map((name) => {
+    const isDir = fs.statSync(path.join(fullPath, name)).isDirectory()
+    return isDir ? `${name}/` : name
+  }).join('\n')
+  
+  // const RemImpFiles = names.filter((name) => !(name as string).startsWith('.') && !(name as string).startsWith('node_modules'))
+  // console.log(RemImpFiles.join('\n'))
+  // return RemImpFiles.join('\n')
+}
+
+
+

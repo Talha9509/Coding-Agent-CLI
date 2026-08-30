@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import { getCredentials } from './utils/getCredentials'
 import { SystemPrompt } from './config'
-import { editFileTool, readfileTool, runCommandTool, writeFileTool } from './tools'
+import { editFileTool, listDirectoryTool, readfileTool, runCommandTool, writeFileTool } from './tools'
 import openAIclient from './utils/openAIclient'
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
@@ -21,6 +21,7 @@ export const agentCommand = new Command('agent')
         'write_File': writeFileTool,
         'edit_File': editFileTool,
         'run_command': runCommandTool,
+        'list_directory': listDirectoryTool,
       }
 
       messages.push({ role: 'system', content: SystemPrompt })

@@ -1,7 +1,7 @@
 import { Command } from 'commander'
 import { getCredentials } from './utils/getCredentials'
 import { SystemPrompt } from './config'
-import { readfileTool, Tools } from './tools'
+import { editFileTool, readfileTool, writeFileTool } from './tools'
 import openAIclient from './utils/openAIclient'
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
@@ -17,7 +17,9 @@ export const agentCommand = new Command('agent')
       const client = await openAIclient(credentials.apiKey) 
       const messages: ChatCompletionMessageParam[] = []
       const tools: Record<string, any> = {
-        'read_File': readfileTool
+        'read_File': readfileTool,
+        'write_File': writeFileTool,
+        'edit_File': editFileTool,
       }
 
       messages.push({ role: 'system', content: SystemPrompt })
@@ -50,10 +52,9 @@ export const agentCommand = new Command('agent')
         } else if (call.type == 'action') {
           console.log("running action")
           const fn = tools[call.function]
-          // const arg = typeof call.function_arguments === 'object' ? call.input.filePath : call.input;
           const observation = await fn(call.function_arguments)
           const obs = { "type": "observation", "observation": observation }
-          messages.push({ role: 'developer', content: JSON.stringify(obs) })
+          messages.push({ role: 'user', content: JSON.stringify(obs) })
         }
       }
     } catch (error) {

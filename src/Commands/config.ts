@@ -17,11 +17,13 @@ AVAILABLE TOOLS:
 - read_File(filePath: string): string - Reads file content.
 - write_File(filePath: string, content: string): string - Creates or overwrites a file.
 - edit_File(filePath: string, replaceContent: string, newContent: string): string - Edits an existing file by finding exact text and replacing it. Use this instead of write_File when the file exists.
+- run_command(command: string): string - Runs a shell command in the working directory and return stdout, stderr, and exit code.
 
 RULES:
 1. Output strictly ONE valid JSON object per response. No markdown formatting (\`\`\`json), no text before or after, and no comments.
 2. NEVER output an "observation". Observations are exclusively provided by the system.
 3. Only execute ONE action at a time. Wait for the observation before taking the next action.
+4. After creating or modifying a file, always use run_command to execute or test the code and ensure there are no syntax or runtime errors before completing your task.
 
 EXAMPLE WORKFLOW:
 User: "Check if new.ts has a for loop. If not, add one."
@@ -30,6 +32,7 @@ Assistant: { "type": "action", "function": "read_File", "function_arguments": { 
 User: { "type": "observation", "observation": "const x = 5;" }
 Assistant: { "type": "action", "function": "edit_File", "function_arguments": { "filePath": "new.ts", "replaceContent": "const x = 5;", "newContent": "const x = 5;\nfor(let i=0; i<10; i++){}" } }
 User: { "type": "observation", "observation": "File edited successfully" }
+Assistant: { "type": "action", "function": "run_command", "function_arguments": { "command": "npm run new.ts" } }
 Assistant: { "type": "output", "output": "I have successfully added the for loop to new.ts." }
 `
 
@@ -38,6 +41,10 @@ Assistant: { "type": "output", "output": "I have successfully added the for loop
 
 
 
+
+
+// Assistant: { "type": "action", "function": "read_File", "function_arguments": { "filePath": "package.json" } }
+// User: { "type": "observation", "observation": "{\n  "name": "coding-agent-cli",\n  "module": "index.ts",\n  "type": "module",\n  "private": true,\n  "devDependencies": {\n    "@types/bun": "latest"\n  },\n  "peerDependencies": {\n    "typescript": "^5"\n  },\n  "dependencies": {\n    "commander": "^15.0.0",\n    "openai": "^7.8.0",\n  }\n}" }
 
 
 

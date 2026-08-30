@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { type ChatCompletionTool } from "openai/resources/chat/completions";
+import { execSync } from "node:child_process";
 
 function safePath(inputPath: string): string {
   const fullPath = path.resolve(process.cwd(), inputPath);
@@ -119,6 +120,44 @@ export async function editFileTool({ "filePath": filePath, "replaceContent": rep
   } catch (error: any) {
     console.log("error")
     return "Failed to edit file: " + error.message
+  }
+}
+
+
+const runCommandToolDef: ChatCompletionTool = {
+  type: 'function',
+  function: {
+    name: 'run_command',
+    description: 'Run a shell command in the working directory and return stdout, stderr, and exit code',
+    parameters: {
+      type: 'object',
+      properties: {
+        command: { type: 'string', description: 'The shell command to run.' },
+      },
+      required: ["command"],
+    }
+  }
+};
+
+export function runCommandTool({ "command": command }: { "command": string }): string {
+  try {
+    const stdout = execSync(command, {
+      cwd: process.cwd(),
+      timeout: 30_000,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    console.log(stdout)
+    return stdout; 
+  } catch (error) {
+    const e = error as { stdout?: string; stderr?: string; status?: number; signal?: string };
+    if (e.signal === "SIGTERM") {
+      return "Error: command timed out after 30 seconds";
+    }
+    let output = e.stdout ?? "";
+    if (e.stderr) output += `\n[stderr]\n${e.stderr}`;
+    output += `\n[exit code: ${e.status ?? "unknown"}]`;
+    return output.trim();
   }
 }
 

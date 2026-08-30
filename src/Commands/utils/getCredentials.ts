@@ -6,7 +6,7 @@ const configPath = path.join(os.homedir(), '.codagent', '.codagent.json');
 
 export const getCredentials = async () => {
   const fileData = fs.readFileSync(configPath, 'utf-8')
-  console.log(fileData)
+  // console.log(fileData)
   const parsedFileData = JSON.parse(fileData)
 
   const provider = parsedFileData.activeProvider

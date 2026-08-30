@@ -12,7 +12,7 @@ export const agentCommand = new Command('agent')
     console.log("User prompt is ..." + options.prompt);
     try {
       const credentials = await getCredentials()
-      console.log(credentials.provider, credentials.model, credentials.apiKey)
+      // console.log(credentials.provider, credentials.model, credentials.apiKey)
 
       const client = await openAIclient(credentials.apiKey) 
       const messages: ChatCompletionMessageParam[] = []

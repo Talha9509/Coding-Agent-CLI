@@ -1,8 +1,9 @@
 import { Command } from 'commander'
 import { getCredentials } from './utils/getCredentials'
 import { SystemPrompt } from './config'
-import { readFile } from './tools'
+import { readfileTool, Tools } from './tools'
 import openAIclient from './utils/openAIclient'
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
 export const agentCommand = new Command('agent')
   .description('Runs the agent')
@@ -14,9 +15,9 @@ export const agentCommand = new Command('agent')
       console.log(credentials.provider, credentials.model, credentials.apiKey)
 
       const client = await openAIclient(credentials.apiKey) 
-      const messages: { role: string, content: string }[] = []
+      const messages: ChatCompletionMessageParam[] = []
       const tools: Record<string, any> = {
-        'readFile': readFile
+        'read_File': readfileTool
       }
 
       messages.push({ role: 'system', content: SystemPrompt })
@@ -31,7 +32,6 @@ export const agentCommand = new Command('agent')
         console.log('iteration loop: ' + iteration)
         const response = await client.chat.completions.create({
           model: 'openrouter/free',
-          // @ts-ignore
           messages: messages,
           response_format: { type: 'json_object' }
         })
@@ -40,8 +40,9 @@ export const agentCommand = new Command('agent')
         messages.push({ role: 'assistant', content: aiResponse as string })
 
         console.log(`\n[Agent Thought]: ${aiResponse}`);
+        const raw = String(aiResponse).trim()
+        const call = JSON.parse(raw)
 
-        const call = JSON.parse(aiResponse as string)
         if (call.type == 'output') {
           console.log(`AI: ${call.output}`)
           console.log("2nd loop ended")
@@ -49,7 +50,8 @@ export const agentCommand = new Command('agent')
         } else if (call.type == 'action') {
           console.log("running action")
           const fn = tools[call.function]
-          const observation = fn(call.input)
+          // const arg = typeof call.function_arguments === 'object' ? call.input.filePath : call.input;
+          const observation = await fn(call.function_arguments)
           const obs = { "type": "observation", "observation": observation }
           messages.push({ role: 'developer', content: JSON.stringify(obs) })
         }
